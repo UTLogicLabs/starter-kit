@@ -1,0 +1,39 @@
+:root {
+  /* raw palette (exposed so downstream can build on primitives too) */
+  --utl-board-900: #082e1b;
+  --utl-board-950: #041a10;
+  --utl-copper-400: #d99a2b;
+  --utl-copper-500: #c1811d;
+  --utl-silkscreen-50: #ffffff;
+  --utl-trace-400: #28b0b8;
+  --utl-solder-900: #0b0f0d;
+  --utl-signal-red-500: #b02730;
+
+  /* semantic tokens — these are what components/Tailwind actually consume */
+  --utl-color-background: var(--utl-solder-900);
+  --utl-color-surface: var(--utl-board-950);
+  --utl-color-foreground: var(--utl-silkscreen-50);
+  --utl-color-border: var(--utl-board-900);
+
+  /* the single override point for retheming without a package rebuild */
+  --utl-color-accent: var(--utl-copper-500);
+  --utl-color-accent-foreground: var(--utl-solder-900);
+  --utl-color-secondary: var(--utl-trace-400);
+  --utl-color-danger: var(--utl-signal-red-500);
+
+  --utl-font-display: '"Liberation Mono", "Courier New", Consolas, monospace';
+  --utl-font-body: 'Inter, "Helvetica Neue", Arial, sans-serif';
+}
+
+/* Preset swatch overrides — consumers can opt in via <html data-theme="..."> */
+[data-theme='copper'] {
+  --utl-color-accent: var(--utl-copper-500);
+}
+
+[data-theme='trace'] {
+  --utl-color-accent: var(--utl-trace-400);
+}
+
+[data-theme='signal-red'] {
+  --utl-color-accent: var(--utl-signal-red-500);
+}

@@ -1,0 +1,23 @@
+{
+  "name": "create-utlogiclabs-app",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "create-utlogiclabs-app": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@utlogiclabs/brand-assets": "^0.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.2.0",
+    "typescript": "^5.5.0",
+    "@types/node": "^20.14.0"
+  }
+}

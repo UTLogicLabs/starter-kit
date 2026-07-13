@@ -1,0 +1,15 @@
+<svg width="480" height="96" viewBox="0 0 480 96" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="480" height="96" rx="8" fill="#082e1b" />
+  <path d="M12 48 H60 M420 48 H468" stroke="#c1811d" stroke-width="3" stroke-linecap="round" />
+  <circle cx="60" cy="48" r="4" fill="#d99a2b" />
+  <circle cx="420" cy="48" r="4" fill="#d99a2b" />
+  <text
+    x="240"
+    y="56"
+    text-anchor="middle"
+    font-family="Liberation Mono, Courier New, monospace"
+    font-weight="700"
+    font-size="28"
+    fill="#ffffff"
+  >{{PROJECT_NAME}}</text>
+</svg>
