@@ -1,0 +1,64 @@
+name: Release
+
+# On every push to master, diff each package's package.json version against
+# the previous commit. Any package whose version changed gets tagged
+# <name>-v<version> (pushed for release history/provenance) and published
+# directly in this same job — deliberately not relying on the pushed tag to
+# re-trigger publish.yml, since GITHUB_TOKEN-authored pushes don't fire other
+# workflow runs.
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: detect
+        run: echo "packages=$(node .github/scripts/detect-version-bumps.mjs)" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: detect
+    if: needs.detect.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.detect.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push tag
+        run: |
+          TAG="${{ matrix.package.name }}-v${{ matrix.package.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Publish
+        working-directory: ${{ matrix.package.dir }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,5 +1,10 @@
-name: Publish
+name: Publish (manual tag)
 
+# Fallback path: push a tag by hand (e.g. re-publishing a hotfix) to trigger a
+# publish without going through the automatic release-on-merge flow.
+# Note: tags pushed by release.yml's GITHUB_TOKEN do NOT re-trigger this
+# workflow (GitHub Actions doesn't chain workflow runs off its own token) —
+# release.yml publishes directly instead of relying on this trigger.
 on:
   push:
     tags:
@@ -9,26 +14,14 @@ on:
       - 'cli-v*'
 
 jobs:
-  publish:
+  resolve:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      dir: ${{ steps.pkg.outputs.dir }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          registry-url: https://registry.npmjs.org
-
-      - run: npm ci
-
-      - name: Build all packages
-        run: npm run build
-
-      - name: Resolve package directory from tag
+      - name: Resolve package directory from tag and verify version
         id: pkg
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
@@ -39,22 +32,17 @@ jobs:
             cli-v*) DIR="cli" ;;
             *) echo "Unrecognized tag: $TAG" && exit 1 ;;
           esac
-          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
-      - name: Verify tag version matches package.json
-        run: |
-          DIR="${{ steps.pkg.outputs.dir }}"
-          TAG="${{ steps.pkg.outputs.tag }}"
           TAG_VERSION="${TAG##*-v}"
           PKG_VERSION=$(node -p "require('./$DIR/package.json').version")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
             echo "Tag version ($TAG_VERSION) does not match $DIR/package.json version ($PKG_VERSION)"
             exit 1
           fi
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
 
-      - name: Publish
-        working-directory: ${{ steps.pkg.outputs.dir }}
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  publish:
+    needs: resolve
+    uses: ./.github/workflows/publish-package.yml
+    with:
+      package_dir: ${{ needs.resolve.outputs.dir }}
+    secrets: inherit
