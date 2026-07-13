@@ -52,19 +52,17 @@ node cli/dist/index.js scratch-app --skip-install
 
 ## Publishing
 
-Manual per-package publishing for v1 (no changesets automation yet), driven by a tag-triggered GitHub Actions workflow (`.github/workflows/publish.yml`) — no local `npm publish` needed.
+Manual per-package version bumps for v1 (no changesets automation yet), but tagging and publishing are automatic once a bump lands on `master`.
 
 To release a package:
 
-1. Bump its `version` in `<package-dir>/package.json` and commit.
-2. Tag and push using the pattern `<package>-v<version>`:
-   ```bash
-   git tag theme-v0.1.1
-   git push origin theme-v0.1.1
-   ```
-   Valid prefixes: `theme-v*`, `brand-assets-v*`, `ui-v*`, `cli-v*` (for `cli/`, published as `create-utlogiclabs-app`).
-3. The workflow builds all packages, verifies the tag version matches `package.json`, and runs `npm publish --access public` for just that package directory.
+1. Bump its `version` in `<package-dir>/package.json` (e.g. `packages/theme/package.json`) on a branch, and merge/push that change to `master`.
+2. `.github/workflows/release.yml` runs on the push to `master`, diffs every package's `package.json` version against the previous commit via `.github/scripts/detect-version-bumps.mjs`, and for each package whose version changed:
+   - creates and pushes a `<name>-v<version>` tag (`theme`, `brand-assets`, `ui`, or `cli` — `cli` publishes as `create-utlogiclabs-app`)
+   - builds all packages and runs `npm publish --access public` for that package directory, in the same job
 
-**One-time setup**: add an `NPM_TOKEN` (an npm automation/publish token) as a repository secret in GitHub before the first tag push — the workflow authenticates via `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` and will fail without it.
+No manual tagging or `npm publish` needed for normal releases. `.github/workflows/publish.yml` (triggered by pushing a `<name>-v<version>` tag by hand) still exists as a fallback for one-off republishes, since GitHub Actions doesn't let a workflow's own tag pushes re-trigger other workflows.
+
+**One-time setup**: add an `NPM_TOKEN` (an npm automation/publish token) as a repository secret in GitHub — both `release.yml` and `publish.yml` authenticate via `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` and will fail without it.
 
 `ui` depends on `theme` via a caret range (`^0.1.0`). A token rename in `theme` is a semver-major change — bump `theme`'s major version, then update `ui`'s dependency range and release a new `ui` version too if the rename affects `ui`'s own Tailwind class usage.
